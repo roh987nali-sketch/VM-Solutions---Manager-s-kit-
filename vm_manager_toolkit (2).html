@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VM Solutions — Manager Toolkit</title>
+<style>
+  :root{
+    --charcoal:#14141A;
+    --panel:#1B1B23;
+    --panel-2:#20202B;
+    --muted:#8A8A96;
+    --amber:#3B82F6;
+    --amber-text:#FAF9F7;
+    --teal:#6FD6FF;
+    --hairline:#2A2A35;
+    --grey:#8A8A8A;
+    --good:#5FD98A;
+    --warn:#F5B85C;
+    --bad:#F0656B;
+    --head: 'Segoe UI Semibold','Space Grotesk',Arial,sans-serif;
+    --sans: 'Segoe UI','Inter',Arial,sans-serif;
+    --mono: 'Consolas','JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--charcoal);
+    color:#EDEDF2;
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px;}
+  .top{
+    display:flex;align-items:center;gap:14px;margin-bottom:22px;
+  }
+  .badge{
+    width:38px;height:38px;border-radius:8px;background:var(--amber);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--head);font-weight:700;font-size:13px;color:var(--amber-text);
+    flex-shrink:0;
+  }
+  h1{font-family:var(--head);font-size:19px;margin:0;letter-spacing:0.2px;}
+  .sub{color:var(--muted);font-size:12.5px;margin-top:2px;}
+  .tabs{
+    display:flex;gap:4px;border-bottom:1px solid var(--hairline);margin-bottom:22px;
+    overflow-x:auto;
+  }
+  .tab{
+    padding:11px 16px;font-size:13px;color:var(--muted);cursor:pointer;
+    border-bottom:2px solid transparent;white-space:nowrap;font-weight:600;
+    user-select:none;
+  }
+  .tab.active{color:var(--teal);border-bottom-color:var(--teal);}
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .15s ease;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .card{
+    background:var(--panel);border:1px solid var(--hairline);border-radius:10px;
+    padding:18px 20px;margin-bottom:16px;
+  }
+  .card h2{font-family:var(--head);font-size:14px;margin:0 0 4px;color:#fff;}
+  .card .hint{color:var(--muted);font-size:12px;margin-bottom:14px;line-height:1.5;}
+  label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;}
+  input,select,textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--hairline);
+    border-radius:6px;color:#EDEDF2;padding:8px 10px;font-size:13px;
+    font-family:var(--sans);
+  }
+  textarea{font-family:var(--mono);font-size:12px;line-height:1.6;resize:vertical;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .field{flex:1;min-width:120px;}
+  button{
+    background:var(--amber);color:var(--amber-text);border:none;border-radius:6px;
+    padding:9px 16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans);
+  }
+  button:hover{filter:brightness(1.1);}
+  button.ghost{
+    background:transparent;border:1px solid var(--hairline);color:#EDEDF2;
+  }
+  button.danger{background:var(--bad);color:#fff;}
+  button.small{padding:6px 11px;font-size:11.5px;}
+  .member{
+    border:1px solid var(--hairline);border-radius:8px;padding:14px;margin-bottom:12px;
+    background:var(--panel-2);
+  }
+  .member-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .member-head input{width:auto;flex:1;font-weight:700;font-size:14px;background:transparent;border:none;padding:0;}
+  .scores{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--hairline);}
+  .score-out{font-size:12px;}
+  .score-out b{font-family:var(--mono);font-size:15px;display:block;}
+  .tier-pill{
+    display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:700;
+    margin-top:3px;
+  }
+  .tier-4{background:rgba(95,217,138,.18);color:var(--good);}
+  .tier-3{background:rgba(111,214,255,.18);color:var(--teal);}
+  .tier-2{background:rgba(245,184,92,.18);color:var(--warn);}
+  .tier-1{background:rgba(240,101,107,.18);color:var(--bad);}
+  .tier-0{background:rgba(240,101,107,.3);color:#fff;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--hairline);vertical-align:top;}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em;}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+  .out-box{
+    white-space:pre-wrap;background:var(--panel-2);border:1px solid var(--hairline);
+    border-radius:8px;padding:16px;font-family:var(--mono);font-size:11.8px;line-height:1.65;
+    max-height:520px;overflow-y:auto;color:#D8D8E2;
+  }
+  .flag{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:700;}
+  .flag.ok{color:var(--good);}
+  .flag.bad{color:var(--bad);}
+  .empty{color:var(--muted);font-size:12.5px;padding:20px 0;text-align:center;}
+  .note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;}
+  .status-msg{font-size:11.5px;color:var(--good);margin-left:10px;opacity:0;transition:opacity .3s;}
+  .status-msg.show{opacity:1;}
+  select{-webkit-appearance:none;appearance:none;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<div id="gate" style="display:none;position:fixed;inset:0;background:rgba(10,10,14,.95);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:var(--panel);border:1px solid var(--hairline);border-radius:10px;padding:28px;width:280px;">
+    <div style="font-family:var(--head);font-size:15px;margin-bottom:4px;">VM Solutions</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:16px;">Enter the access code to open the manager toolkit.</div>
+    <input id="gate-input" type="password" placeholder="Access code" style="margin-bottom:10px;" onkeydown="if(event.key==='Enter')tryUnlock()">
+    <div id="gate-error" style="display:none;color:var(--bad);font-size:11.5px;margin-bottom:10px;">Incorrect code.</div>
+    <button style="width:100%;" onclick="tryUnlock()">Unlock</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="top">
+    <div class="badge">VM</div>
+    <div>
+      <h1>Manager Toolkit</h1>
+      <div class="sub">Scoring calculator · Weekly report generator · Requests log & call digest</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="scoring">Team &amp; Scoring</div>
+    <div class="tab" data-tab="report">Weekly Report</div>
+    <div class="tab" data-tab="requests">Requests Log</div>
+  </div>
+
+  <!-- ============ TAB 1: TEAM & SCORING ============ -->
+  <div class="panel active" id="panel-scoring">
+    <div class="card">
+      <h2>Team roster & weekly scores</h2>
+      <div class="hint">Effort is scored from daily docs (log consistency + hours + activity). Output is scored from CRM truth (raw result vs. team benchmark, and trajectory vs. their own trailing 2-week baseline). Never merge the two — the gap is the insight. Add each of your 3–5 reports below.</div>
+      <div id="members-list"></div>
+      <button onclick="addMember()">+ Add team member</button>
+      <span class="status-msg" id="save-status-1" onclick="persistMembers()">Saved</span>
+    </div>
+    <div class="card">
+      <h2>Tier reference</h2>
+      <div class="hint" style="margin-bottom:0;">9–10 Cooked · 7–8 Strong · 4–6 Solid · 2–3 Showed Up · 0–1 Ghost. Publish thresholds alongside scores every time you post them — visible rules read as fair measurement.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: WEEKLY REPORT ============ -->
+  <div class="panel" id="panel-report">
+    <div class="card">
+      <h2>Report header</h2>
+      <div class="row">
+        <div class="field"><label>Team name</label><input id="rp-team" placeholder="e.g. Email Outbound"></div>
+        <div class="field"><label>Prepared by</label><input id="rp-name" placeholder="Your name"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Week of (start)</label><input id="rp-start" type="date"></div>
+        <div class="field"><label>Week of (end)</label><input id="rp-end" type="date"></div>
+        <div class="field"><label>Daily docs audited (n / total)</label><input id="rp-docs" placeholder="e.g. 5/5"></div>
+        <div class="field"><label>1-on-1 calls completed (n / total)</label><input id="rp-calls" placeholder="e.g. 4/5"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Top results (Section 2 — output ignored on effort)</h2>
+      <textarea id="rp-topresults" rows="3" placeholder="1. Name - 6 calls held, 2 closed, $X pipeline&#10;2. Name - 4 calls held"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Team totals vs. trailing week</h2>
+      <div class="row">
+        <div class="field"><label>Outbound volume</label><input id="rp-vol" placeholder="e.g. 620 emails dispatched"></div>
+        <div class="field"><label>Connects / replies</label><input id="rp-connects" placeholder="e.g. 41"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Qualified calls booked</label><input id="rp-booked" placeholder="e.g. 9"></div>
+        <div class="field"><label>Calls held</label><input id="rp-held" placeholder="e.g. 6"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Deals closed / revenue (AUD)</label><input id="rp-revenue" placeholder="e.g. $1,000 (2 deals)"></div>
+        <div class="field"><label>Cost per booked call (AUD)</label><input id="rp-cpbc" placeholder="e.g. $12"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Attention & attitude evaluation</h2>
+      <div class="row">
+        <div class="field"><label>Rising</label><input id="rp-rising" placeholder="Name - concrete metric shift"></div>
+        <div class="field"><label>Slipping / quiet</label><input id="rp-slipping" placeholder="Name - specific decline"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Discrepancy (logged vs CRM)</label><input id="rp-discrepancy" placeholder="e.g. Name claimed 80 dials, CRM shows 52"></div>
+        <div class="field"><label>Attitude / discipline flags</label><input id="rp-attitude" placeholder="Name - observation & keep/kick recommendation"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Quality audits this week</h2>
+      <div class="row">
+        <div class="field"><label>Audits conducted</label><input id="rp-audits-n" placeholder="e.g. 2"></div>
+        <div class="field"><label>Average team score (/20)</label><input id="rp-audits-avg" placeholder="e.g. 15.5"></div>
+      </div>
+      <label>Lowest audit</label>
+      <input id="rp-audits-low" placeholder="Name (x/20) - issue identified & corrective action taken">
+    </div>
+
+    <div class="card">
+      <h2>Unresolved blockers</h2>
+      <textarea id="rp-blockers" rows="2" placeholder="Name - description of blocker - open for n days"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Decisions this week</h2>
+      <div class="row">
+        <div class="field"><label>Decided</label><input id="rp-decided" placeholder="Action taken | Reasoning | Expected impact"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Changed mind on</label><input id="rp-changed" placeholder="Prior decision reversed | Reasoning"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Coming up / want your call on</label><input id="rp-comingup" placeholder="Strategic decisions held for joint sign-off"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>One thing I'd change</h2>
+      <textarea id="rp-onething" rows="3" placeholder="One concise paragraph of qualitative operational insight — focus on leverage and system improvements."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0;">Generated report</h2>
+        <div>
+          <button class="ghost small" onclick="generateReport()">Regenerate</button>
+          <button class="small" onclick="copyReport()">Copy to clipboard</button>
+        </div>
+      </div>
+      <div class="out-box" id="report-output">Fill in the fields above, then click Regenerate. Team scores are pulled automatically from the Team &amp; Scoring tab.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: REQUESTS LOG ============ -->
+  <div class="panel" id="panel-requests">
+    <div class="card">
+      <h2>Add a request</h2>
+      <div class="hint">Log this immediately after every 1-on-1. "What it would unlock" is mandatory, in numbers wherever possible.</div>
+      <div class="row">
+        <div class="field"><label>Date</label><input id="req-date" type="date"></div>
+        <div class="field"><label>Team member</label><input id="req-name" placeholder="Name"></div>
+        <div class="field"><label>Channel</label>
+          <select id="req-channel">
+            <option>Email Outbound</option>
+            <option>Organic Outreach</option>
+            <option>Cold Calling</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Category</label>
+          <select id="req-category">
+            <option>Tooling</option>
+            <option>Training</option>
+            <option>Process</option>
+            <option>People</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label>What they asked</label><input id="req-ask" placeholder="e.g. Secondary scraping tool"></div>
+        <div class="field"><label>What it would unlock</label><input id="req-unlock" placeholder="e.g. +150 verified leads/wk"></div>
+        <div class="field" style="max-width:140px;"><label>Est. cost (AUD)</label><input id="req-cost" placeholder="$65/mo"></div>
+        <div class="field" style="max-width:100px;"><label>For</label><input id="req-for" placeholder="n/a"></div>
+      </div>
+      <button onclick="addRequest()">+ Add to log</button>
+      <span class="status-msg" id="save-status-2" onclick="persistRequests()">Saved</span>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0;">Running log</h2>
+        <button class="ghost small" onclick="clearRequests()">Clear all</button>
+      </div>
+      <div id="requests-table"></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0;">Call digest (for weekly report Section 6)</h2>
+        <button class="small" onclick="copyDigest()">Copy digest</button>
+      </div>
+      <div class="hint">Requests with identical wording from 2+ people are auto-grouped as repeated themes — those are systems bottlenecks, not preferences.</div>
+      <div class="out-box" id="digest-output">Add requests above to generate a digest.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---------- SUPABASE CONFIG ----------
+// Fill these in from your Supabase project (Project Settings → API).
+// The anon key is safe to expose in client code ONLY because Row Level Security
+// policies control what it can actually do — see the SQL setup instructions.
+const SUPABASE_URL = 'https://sakdyjaetgpvvftsbfod.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_onsa_PZBlVj20pDPU4Xe2g__7zDa5-x';
+
+// Optional lightweight passcode gate. Not real security (anyone can read this file's
+// source) — just a deterrent against a stray link being casually opened by someone
+// it wasn't meant for. Set to '' to disable entirely.
+const ACCESS_PASSCODE = 'vergo2026';
+
+const supabaseClient = (SUPABASE_URL.startsWith('http'))
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+// ---------- storage helpers (Supabase-backed) ----------
+async function load(key, fallback){
+  if(!supabaseClient) return fallback;
+  try{
+    const { data, error } = await supabaseClient
+      .from('toolkit_data')
+      .select('value')
+      .eq('key', key)
+      .maybeSingle();
+    if(error || !data) return fallback;
+    return data.value;
+  }catch(e){ console.error('load error', e); return fallback; }
+}
+function sleep(ms){ return new Promise(res=>setTimeout(res,ms)); }
+
+// Retries transient failures quietly before surfacing anything to the user.
+async function save(key, value, attempt=1){
+  const MAX_ATTEMPTS = 3;
+  if(!supabaseClient) return false;
+  try{
+    const { error } = await supabaseClient
+      .from('toolkit_data')
+      .upsert({ key, value, updated_at: new Date().toISOString() });
+    if(error) throw error;
+    return true;
+  }catch(e){
+    console.error('storage error (attempt '+attempt+')', e);
+    if(attempt < MAX_ATTEMPTS){
+      await sleep(600 * attempt); // backoff: 600ms, 1200ms
+      return save(key, value, attempt+1);
+    }
+    return false;
+  }
+}
+
+// ---------- passcode gate ----------
+function checkPasscode(){
+  if(!ACCESS_PASSCODE){ document.getElementById('gate').style.display='none'; return; }
+  const stored = sessionStorage.getItem('vm-toolkit-unlocked');
+  if(stored === ACCESS_PASSCODE){ document.getElementById('gate').style.display='none'; return; }
+  document.getElementById('gate').style.display='flex';
+}
+function tryUnlock(){
+  const val = document.getElementById('gate-input').value;
+  if(val === ACCESS_PASSCODE){
+    sessionStorage.setItem('vm-toolkit-unlocked', val);
+    document.getElementById('gate').style.display='none';
+  }else{
+    document.getElementById('gate-error').style.display='block';
+  }
+}
+function flashSaved(id, ok=true){
+  const el = document.getElementById(id);
+  el.textContent = ok ? 'Saved' : 'Save failed — click to retry';
+  el.style.color = ok ? 'var(--good)' : 'var(--bad)';
+  el.style.cursor = ok ? 'default' : 'pointer';
+  el.classList.add('show');
+  if(ok) setTimeout(()=>el.classList.remove('show'), 1500);
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+    if(t.dataset.tab==='report') generateReport();
+    if(t.dataset.tab==='requests') generateDigest();
+  });
+});
+
+// ---------- team & scoring ----------
+let members = [];
+
+function blankMember(){
+  return {
+    id: 'm'+Date.now()+Math.random().toString(16).slice(2),
+    name:'', channel:'Email Outbound',
+    logDays:0, hours:'0-4', activity:'below',
+    outputRaw:5, outputTraj:5, audit:''
+  };
+}
+
+function hoursPts(v){ return {'0-4':0,'5-9':1,'10-14':2,'15+':3}[v] ?? 0; }
+function activityPts(v){ return {'below':0,'near1':1,'near2':2,'exceed':3}[v] ?? 0; }
+
+function computeEffort(m){
+  const log = Math.min(4, Number(m.logDays)||0);
+  return log + hoursPts(m.hours) + activityPts(m.activity);
+}
+function computeOutput(m){
+  const raw = Number(m.outputRaw)||0, traj = Number(m.outputTraj)||0;
+  return Math.round((raw*0.5)+(traj*0.5));
+}
+function tierOf(score){
+  if(score>=9) return {n:4, name:'Cooked'};
+  if(score>=7) return {n:3, name:'Strong'};
+  if(score>=4) return {n:2, name:'Solid'};
+  if(score>=2) return {n:1, name:'Showed Up'};
+  return {n:0, name:'Ghost'};
+}
+
+function renderMembers(){
+  const wrap = document.getElementById('members-list');
+  if(members.length===0){
+    wrap.innerHTML = '<div class="empty">No team members yet. Add your 3–5 reports.</div>';
+    return;
+  }
+  wrap.innerHTML = members.map(m=>{
+    return `<div class="member" data-id="${m.id}">
+      <div class="member-head">
+        <input value="${m.name}" placeholder="Team member name" oninput="updateMember('${m.id}','name',this.value,false)">
+        <select onchange="updateMember('${m.id}','channel',this.value,false)">
+          ${['Email Outbound','Organic Outreach','Cold Calling'].map(c=>`<option ${m.channel===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+        <button class="ghost small" style="margin-left:8px;" onclick="removeMember('${m.id}')">Remove</button>
+      </div>
+      <div class="row">
+        <div class="field"><label>Log days complete (0–5)</label>
+          <input type="number" min="0" max="5" value="${m.logDays}" oninput="updateMember('${m.id}','logDays',this.value,true)"></div>
+        <div class="field"><label>Hours worked bracket</label>
+          <select onchange="updateMember('${m.id}','hours',this.value,true)">
+            <option value="0-4" ${m.hours==='0-4'?'selected':''}>0–4 hrs (0 pts)</option>
+            <option value="5-9" ${m.hours==='5-9'?'selected':''}>5–9 hrs (1 pt)</option>
+            <option value="10-14" ${m.hours==='10-14'?'selected':''}>10–14 hrs (2 pts)</option>
+            <option value="15+" ${m.hours==='15+'?'selected':''}>15+ hrs (3 pts)</option>
+          </select></div>
+        <div class="field"><label>Activity volume vs. benchmark</label>
+          <select onchange="updateMember('${m.id}','activity',this.value,true)">
+            <option value="below" ${m.activity==='below'?'selected':''}>Well below (0)</option>
+            <option value="near1" ${m.activity==='near1'?'selected':''}>Near benchmark (1)</option>
+            <option value="near2" ${m.activity==='near2'?'selected':''}>Near benchmark (2)</option>
+            <option value="exceed" ${m.activity==='exceed'?'selected':''}>Clearly exceeding (3)</option>
+          </select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Output — raw result vs. target (0–10)</label>
+          <input type="number" min="0" max="10" value="${m.outputRaw}" oninput="updateMember('${m.id}','outputRaw',this.value,true)"></div>
+        <div class="field"><label>Output — trajectory vs. own baseline (0–10)</label>
+          <input type="number" min="0" max="10" value="${m.outputTraj}" oninput="updateMember('${m.id}','outputTraj',this.value,true)"></div>
+        <div class="field"><label>Latest quality audit (/20, optional)</label>
+          <input type="number" min="0" max="20" value="${m.audit}" placeholder="—" oninput="updateMember('${m.id}','audit',this.value,true)"></div>
+      </div>
+      <div class="scores" id="scores-${m.id}">${scoresHtml(m)}</div>
+    </div>`;
+  }).join('');
+}
+
+function scoresHtml(m){
+  const eff = computeEffort(m), out = computeOutput(m);
+  const effTier = tierOf(eff), outTier = tierOf(out);
+  const auditNum = m.audit==='' ? null : Number(m.audit);
+  let auditFlag = '';
+  if(auditNum!==null && !isNaN(auditNum)){
+    if(auditNum<8) auditFlag = '<span class="flag bad">⚠ Below 8/20 — stop sending until fixed</span>';
+    else if(auditNum<12) auditFlag = '<span class="flag bad">Below 12/20 — flag in report</span>';
+    else auditFlag = '<span class="flag ok">Audit OK</span>';
+  }
+  return `<div class="score-out">Effort<b>${eff}/10</b><span class="tier-pill tier-${effTier.n}">${effTier.name}</span></div>
+    <div class="score-out">Output<b>${out}/10</b><span class="tier-pill tier-${outTier.n}">${outTier.name}</span></div>
+    <div class="score-out">Audit${auditFlag ? '<br>'+auditFlag : '<br><span style="color:var(--muted)">not entered</span>'}</div>`;
+}
+
+function addMember(){
+  members.push(blankMember());
+  renderMembers();
+  persistMembers();
+}
+function removeMember(id){
+  members = members.filter(m=>m.id!==id);
+  renderMembers();
+  persistMembers();
+}
+function updateMember(id, field, value, affectsScore){
+  const m = members.find(m=>m.id===id);
+  if(!m) return;
+  m[field]=value;
+  if(affectsScore){
+    const el = document.getElementById('scores-'+id);
+    if(el) el.innerHTML = scoresHtml(m);
+  }
+  persistMembers();
+}
+let saveTimer;
+function persistMembers(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const ok = await save('vm-team-members', members);
+    flashSaved('save-status-1', ok);
+  }, 400);
+}
+
+// ---------- requests log ----------
+let requests = [];
+
+function renderRequests(){
+  const wrap = document.getElementById('requests-table');
+  if(requests.length===0){
+    wrap.innerHTML = '<div class="empty">No requests logged yet.</div>';
+    return;
+  }
+  const rows = requests.slice().reverse().map(r=>`
+    <tr>
+      <td>${r.date||'—'}</td>
+      <td>${r.name||'—'}</td>
+      <td>${r.channel||'—'}</td>
+      <td>${r.category||'—'}</td>
+      <td>${r.ask||'—'}</td>
+      <td>${r.unlock||'—'}</td>
+      <td>${r.cost||'—'}</td>
+      <td>${r.for||'—'}</td>
+      <td><button class="ghost small" onclick="removeRequest('${r.id}')">✕</button></td>
+    </tr>`).join('');
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Date</th><th>Name</th><th>Channel</th><th>Category</th><th>Asked</th><th>Unlocks</th><th>Cost</th><th>For</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+function addRequest(){
+  const r = {
+    id:'r'+Date.now()+Math.random().toString(16).slice(2),
+    date: document.getElementById('req-date').value,
+    name: document.getElementById('req-name').value,
+    channel: document.getElementById('req-channel').value,
+    category: document.getElementById('req-category').value,
+    ask: document.getElementById('req-ask').value,
+    unlock: document.getElementById('req-unlock').value,
+    cost: document.getElementById('req-cost').value,
+    for: document.getElementById('req-for').value,
+  };
+  if(!r.name || !r.ask){ alert('Add at least a name and what they asked for.'); return; }
+  requests.push(r);
+  ['req-name','req-ask','req-unlock','req-cost','req-for'].forEach(id=>document.getElementById(id).value='');
+  renderRequests();
+  generateDigest();
+  persistRequests();
+}
+function removeRequest(id){
+  requests = requests.filter(r=>r.id!==id);
+  renderRequests();
+  generateDigest();
+  persistRequests();
+}
+function clearRequests(){
+  if(!confirm('Clear the entire requests log? This cannot be undone.')) return;
+  requests = [];
+  renderRequests();
+  generateDigest();
+  persistRequests();
+}
+async function persistRequests(){
+  const ok = await save('vm-requests-log', requests);
+  flashSaved('save-status-2', ok);
+}
+
+function generateDigest(){
+  const out = document.getElementById('digest-output');
+  if(requests.length===0){ out.textContent = 'Add requests above to generate a digest.'; return; }
+
+  const groups = {};
+  requests.forEach(r=>{
+    const key = (r.ask||'').trim().toLowerCase();
+    if(!key) return;
+    if(!groups[key]) groups[key] = { ask:r.ask, unlock:r.unlock, cost:r.cost, names:[], channels:[] };
+    groups[key].names.push(r.name);
+    groups[key].channels.push(r.channel);
+  });
+
+  const repeated = Object.values(groups).filter(g=>new Set(g.names).size>=2);
+  const individual = Object.values(groups).filter(g=>new Set(g.names).size<2);
+
+  let text = 'CALL DIGEST\n\n';
+  text += '• REPEATED THEMES (raised by 2+ team members — act on these):\n';
+  if(repeated.length===0){ text += '  (none this week)\n'; }
+  repeated.forEach(g=>{
+    text += `  - ${g.ask} | Raised by: ${[...new Set(g.names)].join(', ')} (${[...new Set(g.channels)].join(', ')}) | Concrete unlock: ${g.unlock||'—'} | Est. cost: ${g.cost||'—'}\n`;
+  });
+  text += '\n• HIGH-VALUE INDIVIDUAL REQUESTS:\n';
+  if(individual.length===0){ text += '  (none this week)\n'; }
+  individual.forEach(g=>{
+    text += `  - ${g.ask} | ${[...new Set(g.names)].join(', ')} | Unlock: ${g.unlock||'—'} | Est. cost: ${g.cost||'—'}\n`;
+  });
+  text += '\n• TEAM TEMPERATURE & ATTITUDE EVALUATION:\n  - [Fill in from this week\'s 1-on-1s]\n';
+  text += '\n• WINS WORTH REPEATING:\n  - [Name] | [Tactic that worked] | Action: [Rollout plan]\n';
+  text += '\n• WATCH LIST / OFFBOARDING RECOMMENDATIONS:\n  - [Name] | [Concern] | Recommendation: [Keep / Coach / Kick]\n';
+
+  out.textContent = text;
+}
+function copyDigest(){
+  navigator.clipboard.writeText(document.getElementById('digest-output').textContent);
+}
+
+// ---------- weekly report ----------
+function generateReport(){
+  const v = id => document.getElementById(id).value.trim();
+
+  let membersBlock = '(No team members entered in the Team & Scoring tab yet)';
+  if(members.length>0){
+    membersBlock = members.map(m=>{
+      const eff = computeEffort(m), out = computeOutput(m);
+      const tier = tierOf(Math.min(eff,out));
+      return `• ${m.name||'Unnamed'} | Effort: ${eff}/10 | Output: ${out}/10 | Status: ${tier.name} - [one-line summary]`;
+    }).join('\n');
+  }
+
+  const teamName = v('rp-team') || '[Team Name]';
+  const weekRange = (v('rp-start')&&v('rp-end')) ? `${v('rp-start')} – ${v('rp-end')}` : '[DD/MM/YYYY - DD/MM/YYYY]';
+
+  const digestText = requests.length>0 ? document.getElementById('digest-output').textContent : '[See Requests Log tab]';
+
+  const report =
+`VERGO WEEKLY PERFORMANCE REPORT - ${teamName.toUpperCase()}
+Week of: ${weekRange}
+Prepared by: ${v('rp-name')||'[Your Name]'}
+Daily Docs Audited: ${v('rp-docs')||'[n]/[Total]'} | 1-on-1 Calls Completed: ${v('rp-calls')||'[n]/[Total]'}
+
+1. TEAM PERFORMANCE BREAKDOWN
+${membersBlock}
+
+2. TOP RESULTS (By Output - Effort Ignored)
+${v('rp-topresults') || '[Fill in]'}
+
+3. TEAM TOTALS (Vs. Trailing Week)
+• Outbound Volume: ${v('rp-vol')||'[n]'}
+• Connects / Replies: ${v('rp-connects')||'[n]'}
+• Qualified Calls Booked: ${v('rp-booked')||'[n]'}
+• Calls Held: ${v('rp-held')||'[n]'}
+• Deals Closed / Revenue: ${v('rp-revenue')||'[n]'}
+• Cost Per Booked Call: ${v('rp-cpbc')||'AUD $[n]'}
+
+4. PAY ATTENTION TO & ATTITUDE EVALUATION
+• RISING: ${v('rp-rising')||'[Name] - [Concrete metric shift]'}
+• SLIPPING / QUIET: ${v('rp-slipping')||'[Name] - [Specific decline]'}
+• DISCREPANCY: ${v('rp-discrepancy')||'[Logged claims vs. CRM truth]'}
+• ATTITUDE / DISCIPLINE FLAGS: ${v('rp-attitude')||'[Name] - [Observation & recommendation]'}
+
+5. QUALITY AUDITS THIS WEEK
+• ${v('rp-audits-n')||'[n]'} Audits Conducted | Average Team Score: ${v('rp-audits-avg')||'[x]'}/20
+• Lowest Audit: ${v('rp-audits-low')||'[Name] ([x]/20) - [Issue & corrective action]'}
+
+6. CALL DIGEST & REQUESTS
+${digestText}
+
+7. UNRESOLVED BLOCKERS
+${v('rp-blockers') || '[Name] - [Description] - Open for: [n] days'}
+
+8. DECISIONS I MADE THIS WEEK
+• DECIDED: ${v('rp-decided')||'[Action] | [Reasoning] | [Expected impact]'}
+• CHANGED MY MIND ON: ${v('rp-changed')||'[Prior decision] | [Reasoning]'}
+• COMING UP / WANT YOUR CALL ON: ${v('rp-comingup')||'[Strategic decisions for joint sign-off]'}
+
+9. ONE THING I'D CHANGE
+${v('rp-onething') || '[One paragraph — focus on leverage and system improvements]'}`;
+
+  document.getElementById('report-output').textContent = report;
+  saveReportFields();
+}
+function copyReport(){
+  navigator.clipboard.writeText(document.getElementById('report-output').textContent);
+}
+
+let reportSaveTimer;
+function saveReportFields(){
+  clearTimeout(reportSaveTimer);
+  reportSaveTimer = setTimeout(async ()=>{
+    const ids = ['rp-team','rp-name','rp-start','rp-end','rp-docs','rp-calls','rp-topresults',
+      'rp-vol','rp-connects','rp-booked','rp-held','rp-revenue','rp-cpbc','rp-rising','rp-slipping',
+      'rp-discrepancy','rp-attitude','rp-audits-n','rp-audits-avg','rp-audits-low','rp-blockers',
+      'rp-decided','rp-changed','rp-comingup','rp-onething'];
+    const data = {};
+    ids.forEach(id=>data[id]=document.getElementById(id).value);
+    await save('vm-report-fields', data);
+  }, 500);
+}
+
+// auto-regenerate report as fields change
+document.getElementById('panel-report').addEventListener('input', ()=>{
+  generateReport();
+});
+
+// ---------- init ----------
+async function init(){
+  checkPasscode();
+  if(!supabaseClient){
+    document.querySelector('.wrap').insertAdjacentHTML('afterbegin',
+      '<div class="card" style="border-color:var(--bad);"><h2 style="color:var(--bad);">Setup needed</h2>' +
+      '<div class="hint">SUPABASE_URL and SUPABASE_ANON_KEY haven\'t been filled in yet near the top of the script. ' +
+      'Data won\'t save until that\'s done — see the deployment guide.</div></div>');
+  }
+  members = await load('vm-team-members', []);
+  requests = await load('vm-requests-log', []);
+  const reportFields = await load('vm-report-fields', null);
+
+  renderMembers();
+  renderRequests();
+  generateDigest();
+
+  if(reportFields){
+    Object.entries(reportFields).forEach(([id,val])=>{
+      const el = document.getElementById(id);
+      if(el) el.value = val;
+    });
+  }
+  generateReport();
+}
+init();
+</script>
+</body>
+</html>
